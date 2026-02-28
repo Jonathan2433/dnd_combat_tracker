@@ -455,3 +455,18 @@ input, select {
     color: #3498db;
     font-weight: bold;
 }
+
+.fled {
+    background: #1a1a1a;
+    opacity: 0.6;
+    border-left: 4px solid #ff9800;
+}
+
+.fled .health-status {
+    display: none;
+}
+
+.fled-init {
+    opacity: 0.5;
+    color: #ff9800;
+}

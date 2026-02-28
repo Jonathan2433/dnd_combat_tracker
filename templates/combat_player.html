@@ -23,21 +23,22 @@
 
         {% for c in combatants %}
         <div class="combatant
-            {% if loop.index0 == combat.current_turn %}active-turn{% endif %}
-            {{ c.type|lower }}"
-            {% if loop.index0 == combat.current_turn %}id="current-turn"{% endif %}>
+            {% if c == current_actor %}active-turn{% endif %}
+            {% if c.is_dead %}dead{% endif %}
+            {% if c.has_fled %}fled{% endif %}
+            {{ c.type|lower }}">
 
             <div class="combatant-header">
                 <h3>
                     {{ c.name }}
-                    {% if loop.index0 == combat.current_turn %}
+                    {% if c == current_actor %}
                         <span class="turn-badge">🎯 Tour en cours</span>
                     {% endif %}
                 </h3>
                 <span class="initiative">Init {{ c.initiative }}</span>
             </div>
 
-            <!-- ✅ PV visibles uniquement pour les PJ -->
+            <!-- PV visibles uniquement pour les PJ -->
             {% if c.type == "PJ" %}
             <div class="hp-bar-container">
                 <div class="hp-bar"
@@ -47,61 +48,68 @@
             <div>{{ c.hp_current }} / {{ c.hp_max }} PV</div>
 
             {% else %}
-                <!-- ✅ VOICI OÙ TU REMPLACES "En forme" -->
-            {% if c.is_dead %}
-            <div class="dead">💀 Mort</div>
-            {% else %}
-                {% set ratio = c.hp_current / c.hp_max %}
+                {% if c.is_dead %}
+                    <div class="dead">💀 Mort</div>
+                {% elif c.has_fled %}
+                    <div class="fled">🏃 En fuite</div>
+                {% else %}
+                    {% set ratio = c.hp_current / c.hp_max %}
                     {% if ratio > 0.75 %}
-                <div class="health-status">🟢 En pleine forme</div>
+                        <div class="health-status">🟢 En pleine forme</div>
                     {% elif ratio > 0.4 %}
-                <div class="health-status">🟡 Blessé</div>
+                        <div class="health-status">🟡 Blessé</div>
                     {% elif ratio > 0.1 %}
-                <div class="health-status">🟠 Gravement blessé</div>
+                        <div class="health-status">🟠 Gravement blessé</div>
                     {% else %}
-                <div class="health-status">🔴 À l'agonie</div>
+                        <div class="health-status">🔴 À l'agonie</div>
                     {% endif %}
                 {% endif %}
             {% endif %}
 
-        <!-- ✅ CONDITIONS VISIBLES POUR TOUS -->
-        <div class="conditions">
-            {% if c.conditions %}
-                {% for cond in c.conditions.split(",") %}
-                    {% if cond.strip() %}
-                        <span class="condition-badge active-condition">
-                            {{ cond.strip() }}
-                        </span>
-                    {% endif %}
-                {% endfor %}
-            {% endif %}
-        </div>
+            <!-- CONDITIONS VISIBLES POUR TOUS -->
+            <div class="conditions">
+                {% if c.conditions %}
+                    {% for cond in c.conditions.split(",") %}
+                        {% if cond.strip() %}
+                            <span class="condition-badge active-condition">
+                                {{ cond.strip() }}
+                            </span>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            </div>
+
         </div>
         {% endfor %}
 
     </div>
 
-    <!-- ✅ SIDEBAR INITIATIVE JOUEUR -->
+    <!-- ========================= -->
+    <!-- SIDEBAR INITIATIVE JOUEUR -->
+    <!-- ========================= -->
     <div class="initiative-panel">
         <h3>🎯 Initiative</h3>
 
         <div class="initiative-list">
             {% for p in combatants %}
-                <div class="initiative-card
-                    {% if loop.index0 == combat.current_turn %}active-init{% endif %}
-                    {% if p.is_dead %}dead-init{% endif %}">
+            <div class="initiative-card
+                {% if p == current_actor %}active-init{% endif %}
+                {% if p.is_dead %}dead-init{% endif %}
+                {% if p.has_fled %}fled-init{% endif %}">
 
-                    <div>{{ p.name }}</div>
-                    <div>Init {{ p.initiative }}</div>
+                <div>{{ p.name }}</div>
+                <div>Init {{ p.initiative }}</div>
 
-                </div>
+            </div>
             {% endfor %}
         </div>
     </div>
 
 </div>
 
-<!-- ✅ CHRONOS JS (identique) -->
+<!-- ========================= -->
+<!-- CHRONOS JS -->
+<!-- ========================= -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
 
@@ -143,7 +151,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 });
 
-// Auto-refresh toutes les 5 secondes
+// Auto-refresh toutes les 3 secondes pour mettre à jour morts/fuyards
 setInterval(() => {
     window.location.reload();
 }, 3000);

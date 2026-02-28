@@ -465,61 +465,59 @@ def view_combat(combat_id):
 
 @app.route('/combat/<int:combat_id>/player')
 def view_combat_player(combat_id):
-
     combat = Combat.query.get_or_404(combat_id)
 
+    # Tous les combattants visibles pour affichage (y compris morts et fuyards)
     combatants_sorted = sorted(
-        [c for c in combat.combatants if not c.is_hidden],
+        [c for c in combat.combatants if not c.is_hidden and not c.is_dead],
         key=lambda x: x.initiative,
         reverse=True
     )
 
-    initiative_order = sorted(
-        [c for c in combat.combatants if not c.is_hidden],
+    # Combattants vivants et non fuyards pour déterminer le tour actif
+    active_combatants = sorted(
+        [c for c in combat.combatants if not c.is_hidden and not c.has_fled and not c.is_dead],
         key=lambda x: x.initiative,
         reverse=True
     )
 
+    # Récupérer le combattant actif
+    current_actor = get_current_actor(combat)  # filtre déjà morts/fuyards
+
+    # Organisation en groupes / singles (optionnel)
     groups = {}
     singles = []
-
     for c in combatants_sorted:
-        if c.is_hidden:
-            continue  # ✅ on ignore les masqués
-
         if c.group_id:
             groups.setdefault(c.group_id, []).append(c)
         else:
             singles.append(c)
 
-    # ✅ NOUVEAU : calcul état visuel des groupes
+    # Calcul état visuel des groupes
     group_condition_states = {}
-
     for group_id, members in groups.items():
         group_condition_states[group_id] = {}
-
         for condition in CONDITIONS_LIST:
-            count = 0
-            for m in members:
-                if m.conditions and condition in m.conditions.split(","):
-                    count += 1
-
+            count = sum(1 for m in members if m.conditions and condition in m.conditions.split(","))
             if count == 0:
                 state = "none"
             elif count == len(members):
                 state = "all"
             else:
                 state = "partial"
-
             group_condition_states[group_id][condition] = state
 
     return render_template(
         'combat_player.html',
         combat=combat,
         combatants=combatants_sorted,
+        current_actor=current_actor,  # ✅ passer l'objet directement
         start_time=combat.start_time,
         round_start=combat.current_round_start,
-        turn_start=combat.current_turn_start
+        turn_start=combat.current_turn_start,
+        groups=groups,
+        singles=singles,
+        group_condition_states=group_condition_states
     )
 
 @app.route('/combat/<int:combat_id>/add', methods=['POST'])
@@ -1016,7 +1014,7 @@ def next_turn(combat_id):
     # =========================
 
     combatants = sorted(
-        [c for c in combat.combatants if not c.is_hidden],
+        [c for c in combat.combatants if not c.is_hidden and not c.has_fled and not c.is_dead],
         key=lambda x: x.initiative,
         reverse=True
     )
