@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <title>D&D Combat Tracker</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    </head>
+    <body>
+
+        <header>
+
+            <a href="{{ url_for('index') }}" class="btn">Accueil</a>
+            <h1>⚔️ D&D Exalt Combat Tracker</h1>
+            <a href="{{ url_for('manage_templates') }}" class="btn">
+            🛠️ Gérer les Templates
+            </a>
+        </header>
+
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+    </body>
+</html>

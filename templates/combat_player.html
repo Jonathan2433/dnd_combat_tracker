@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="combat-layout">
+
+    <!-- ========================= -->
+    <!-- COLONNE PRINCIPALE JOUEUR -->
+    <!-- ========================= -->
+    <div class="combat-main">
+
+        <h2>{{ combat.name }} — Round {{ combat.round }}</h2>
+
+        <!-- ✅ CHRONOS JOUEUR -->
+        {% if combat.has_started %}
+        <div class="live-chrono-bar">
+            <div>⏱ Combat : <span id="combat-timer">00:00</span></div>
+            <div>🔁 Round : <span id="round-timer">00:00</span></div>
+            <div>🎯 Tour : <span id="turn-timer">00:00</span></div>
+        </div>
+        {% endif %}
+
+        <hr>
+
+        {% for c in combatants %}
+        <div class="combatant
+            {% if loop.index0 == combat.current_turn %}active-turn{% endif %}
+            {{ c.type|lower }}"
+            {% if loop.index0 == combat.current_turn %}id="current-turn"{% endif %}>
+
+            <div class="combatant-header">
+                <h3>
+                    {{ c.name }}
+                    {% if loop.index0 == combat.current_turn %}
+                        <span class="turn-badge">🎯 Tour en cours</span>
+                    {% endif %}
+                </h3>
+                <span class="initiative">Init {{ c.initiative }}</span>
+            </div>
+
+            <!-- ✅ PV visibles uniquement pour les PJ -->
+            {% if c.type == "PJ" %}
+            <div class="hp-bar-container">
+                <div class="hp-bar"
+                     style="width: {{ (c.hp_current / c.hp_max) * 100 }}%">
+                </div>
+            </div>
+            <div>{{ c.hp_current }} / {{ c.hp_max }} PV</div>
+
+            {% else %}
+                <!-- ✅ VOICI OÙ TU REMPLACES "En forme" -->
+            {% if c.is_dead %}
+            <div class="dead">💀 Mort</div>
+            {% else %}
+                {% set ratio = c.hp_current / c.hp_max %}
+                    {% if ratio > 0.75 %}
+                <div class="health-status">🟢 En pleine forme</div>
+                    {% elif ratio > 0.4 %}
+                <div class="health-status">🟡 Blessé</div>
+                    {% elif ratio > 0.1 %}
+                <div class="health-status">🟠 Gravement blessé</div>
+                    {% else %}
+                <div class="health-status">🔴 À l'agonie</div>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+
+        <!-- ✅ CONDITIONS VISIBLES POUR TOUS -->
+        <div class="conditions">
+            {% if c.conditions %}
+                {% for cond in c.conditions.split(",") %}
+                    {% if cond.strip() %}
+                        <span class="condition-badge active-condition">
+                            {{ cond.strip() }}
+                        </span>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </div>
+        </div>
+        {% endfor %}
+
+    </div>
+
+    <!-- ✅ SIDEBAR INITIATIVE JOUEUR -->
+    <div class="initiative-panel">
+        <h3>🎯 Initiative</h3>
+
+        <div class="initiative-list">
+            {% for p in combatants %}
+                <div class="initiative-card
+                    {% if loop.index0 == combat.current_turn %}active-init{% endif %}
+                    {% if p.is_dead %}dead-init{% endif %}">
+
+                    <div>{{ p.name }}</div>
+                    <div>Init {{ p.initiative }}</div>
+
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+
+<!-- ✅ CHRONOS JS (identique) -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+    const active = document.getElementById("current-turn");
+    if (active) {
+        active.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+    }
+
+    {% if combat.has_started and start_time and round_start and turn_start %}
+
+    function formatTime(seconds) {
+        let m = Math.floor(seconds / 60);
+        let s = seconds % 60;
+        return String(m).padStart(2, '0') + ":" + String(s).padStart(2, '0');
+    }
+
+    const combatStart = new Date("{{ start_time.isoformat() }}Z");
+    const roundStart  = new Date("{{ round_start.isoformat() }}Z");
+    const turnStart   = new Date("{{ turn_start.isoformat() }}Z");
+
+    setInterval(() => {
+        const now = new Date();
+
+        document.getElementById("combat-timer").textContent =
+            formatTime(Math.floor((now - combatStart) / 1000));
+
+        document.getElementById("round-timer").textContent =
+            formatTime(Math.floor((now - roundStart) / 1000));
+
+        document.getElementById("turn-timer").textContent =
+            formatTime(Math.floor((now - turnStart) / 1000));
+
+    }, 1000);
+
+    {% endif %}
+
+});
+
+// Auto-refresh toutes les 5 secondes
+setInterval(() => {
+    window.location.reload();
+}, 3000);
+</script>
+
+{% endblock %}

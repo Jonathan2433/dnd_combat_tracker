@@ -1,0 +1,425 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="combat-layout">
+
+    <!-- ========================= -->
+    <!-- COLONNE PRINCIPALE COMBAT -->
+    <!-- ========================= -->
+    <div class="combat-main">
+
+        <h2>{{ combat.name }} — Round {{ combat.round }}</h2>
+
+        <!-- PANNEAU DE CONTRÔLE FLOTTANT -->
+        <div class="floating-hud">
+
+            <!-- Chronos -->
+            {% if combat.has_started %}
+            <div class="hud-chronos">
+                <div>⏱ <span id="combat-timer">00:00</span></div>
+                <div>🔁 <span id="round-timer">00:00</span></div>
+                <div>🎯 <span id="turn-timer">00:00</span></div>
+            </div>
+            {% endif %}
+
+            <!-- Boutons -->
+            <div class="hud-buttons">
+                {% if not combat.has_started %}
+                    <a href="{{ url_for('start_combat', combat_id=combat.id) }}"
+                       class="btn-primary btn-large">
+                        ▶ Lancer le combat
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('next_turn', combat_id=combat.id) }}"
+                       class="btn-primary btn-large">
+                        ▶ Tour Suivant
+                    </a>
+                {% endif %}
+
+                <a href="{{ url_for('view_combat_player', combat_id=combat.id) }}"
+                   class="btn-secondary"
+                   target="_blank">
+                   👥 Vue Joueurs
+                </a>
+
+            <!-- ✅ BOUTON CLÔTURER -->
+            {% if not combat.is_closed %}
+                <a href="{{ url_for('close_combat', combat_id=combat.id) }}"
+                   class="btn-danger">
+                    🏁 Clôturer le combat
+                </a>
+            {% endif %}
+            </div>
+
+        </div>
+
+        <hr>
+
+        <!-- ========================= -->
+        <!-- AJOUT MANUEL -->
+        <!-- ========================= -->
+        <section class="card">
+            <h3>➕ Ajouter un combattant</h3>
+
+            <form method="POST"
+                  action="{{ url_for('add_combatant', combat_id=combat.id) }}"
+                  class="grid-form">
+
+                <input type="text" name="name" placeholder="Nom" required>
+
+                <select name="type">
+                    <option value="PJ">PJ</option>
+                    <option value="Ennemi">Ennemi</option>
+                    <option value="Boss">Boss</option>
+                    <option value="Neutre">Neutre</option>
+                </select>
+
+                <input type="number" name="hp_max" placeholder="PV Max" required>
+                <input type="number" name="hp_current" placeholder="PV Actuels">
+                <input type="number" name="ac" placeholder="CA" required>
+                <input type="number" name="initiative" placeholder="Initiative" required>
+
+                <button type="submit" class="btn-primary">Ajouter</button>
+            </form>
+        </section>
+
+        <!-- ========================= -->
+        <!-- TEMPLATES PJ -->
+        <!-- ========================= -->
+        <section class="card">
+            <h3>👥 Ajouter des PJ (templates)</h3>
+
+            <form method="POST" action="{{ url_for('add_character_template', combat_id=combat.id) }}" class="template-form">
+                <select name="template_id">
+                    {% for char in character_templates %}
+                        <option value="{{ char.id }}">
+                            {{ char.name }} ({{ char.character_class }} {{ char.level }})
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <button type="submit" class="btn-primary">Ajouter PJ</button>
+            </form>
+        </section>
+
+        <!-- ========================= -->
+        <!-- ENCOUNTERS COMPLETS -->
+        <!-- ========================= -->
+        <section class="card">
+            <h3>⚔️ Charger un encounter</h3>
+
+            <form method="POST" action="{{ url_for('load_encounter', combat_id=combat.id) }}" class="template-form">
+                <select name="encounter_id">
+                    {% for enc in encounter_templates %}
+                        <option value="{{ enc.id }}">{{ enc.name }} ({{ enc.difficulty }})</option>
+                    {% endfor %}
+                </select>
+
+                <button type="submit" class="btn-primary">Charger</button>
+            </form>
+        </section>
+
+        <!-- ========================= -->
+        <!-- AJOUT MONSTRES LOST MINE -->
+        <!-- ========================= -->
+        <section class="card">
+            <h3>Ajouter un monstre (Lost Mine)</h3>
+
+            <form method="POST"
+                  action="{{ url_for('add_template', combat_id=combat.id) }}"
+                  class="grid-form">
+
+                <select name="template">
+                    {% for name in MONSTER_TEMPLATES.keys() %}
+                        <option>{{ name }}</option>
+                    {% endfor %}
+                </select>
+
+                <input type="number" name="quantity" value="1" min="1">
+                <input type="number" name="initiative" placeholder="Initiative (optionnel)">
+
+                <button type="submit" class="btn-primary">Ajouter</button>
+            </form>
+        </section>
+
+        <!-- ========================= -->
+        <!-- REGROUPEMENT -->
+        <!-- ========================= -->
+        <section class="card">
+            <h3>🛡 Regrouper des combattants</h3>
+
+            <form method="POST"
+                  action="{{ url_for('create_group', combat_id=combat.id) }}">
+
+                {% for c in singles %}
+                    {% if not c.is_dead and not c.has_fled %}
+                        <div>
+                            <input type="checkbox"
+                                   name="selected_combatants"
+                                   value="{{ c.id }}">
+                            {{ c.name }} (Init {{ c.initiative }})
+                        </div>
+                    {% endif %}
+                {% endfor %}
+
+                <br>
+                <button type="submit" class="btn-primary">Regrouper</button>
+            </form>
+        </section>
+
+        <hr>
+
+        <!-- ========================= -->
+        <!-- GROUPES -->
+        <!-- ========================= -->
+        {% for group_id, members in groups.items() %}
+        <div class="combatant horde">
+
+            <h3>
+                {{ members[0].group_name }} x{{ members|length }}
+                (Init {{ members[0].initiative }})
+            </h3>
+
+            <div>
+                PV total :
+                {{ members|sum(attribute='hp_current') }}
+                /
+                {{ members|sum(attribute='hp_max') }}
+            </div>
+
+            <!-- Actions groupe -->
+            <div class="group-actions">
+                <form method="POST"
+                      action="{{ url_for('damage_group', group_id=group_id) }}">
+                    <input type="number" name="amount" placeholder="Dégâts">
+                    <button class="btn-danger">Infliger</button>
+                </form>
+
+                <form method="POST"
+                      action="{{ url_for('heal_group', group_id=group_id) }}">
+                    <input type="number" name="amount" placeholder="Soin">
+                    <button class="btn-primary">Soigner</button>
+                </form>
+            </div>
+
+            <!-- Conditions groupe -->
+            <div class="conditions">
+                {% for condition in conditions_list %}
+                    {% set state = group_condition_states[group_id][condition] %}
+                    <a href="{{ url_for('toggle_condition_group',
+                                        group_id=group_id,
+                                        condition=condition) }}"
+                       class="condition-badge
+                       {% if state == 'all' %}active-condition
+                       {% elif state == 'partial' %}partial-condition
+                       {% endif %}">
+                        {{ condition }}
+                    </a>
+                {% endfor %}
+            </div>
+
+            <a href="{{ url_for('ungroup', group_id=group_id) }}"
+               class="btn-danger">
+                Dégrouper
+            </a>
+
+        </div>
+        {% endfor %}
+
+        <!-- ========================= -->
+        <!-- COMBATTANTS INDIVIDUELS -->
+        <!-- ========================= -->
+        {% for c in singles %}
+        <div class="combatant
+            {% if loop.index0 == combat.current_turn %}active-turn{% endif %}
+            {{ c.type|lower }}"
+            {% if loop.index0 == combat.current_turn %}id="current-turn"{% endif %}>
+
+            <div class="combatant-header">
+                <h3>
+                    {{ c.name }}
+                    {% if loop.index0 == combat.current_turn %}
+                        <span class="turn-badge">🎯 Tour en cours</span>
+                    {% endif %}
+                </h3>
+                <span class="initiative">Init {{ c.initiative }}</span>
+            </div>
+
+            <div>
+                CA : {{ c.ac_total }}
+                {% if c.ac_bonus != 0 %}
+                    (Base {{ c.ac_base }} + {{ c.ac_bonus }})
+                {% endif %}
+            </div>
+
+            <form method="POST"
+                  action="{{ url_for('modify_ac', id=c.id) }}"
+                  class="damage-form">
+                <input type="number" name="amount" placeholder="+/- CA">
+                <button type="submit" class="btn-secondary">Modifier CA</button>
+            </form>
+
+            <div class="hp-bar-container">
+                <div class="hp-bar"
+                     style="width: {{ (c.hp_current / c.hp_max) * 100 }}%">
+                </div>
+            </div>
+
+            <div>{{ c.hp_current }} / {{ c.hp_max }} PV</div>
+            <div class="temp-hp-container">
+                <div class="temp-hp-bar" style="width: {{ (c.temp_hp / c.hp_max) * 100 }}%"></div>
+            </div>
+
+            <div>
+                {{ c.hp_current }} / {{ c.hp_max }} PV
+                {% if c.temp_hp > 0 %}
+                    <span class="temp-hp-text">(+{{ c.temp_hp }} temp)</span>
+                {% endif %}
+            </div>
+
+            <form method="POST"
+                  action="{{ url_for('modify_temp_hp', id=c.id) }}"
+                  class="damage-form">
+                <input type="number" name="amount" placeholder="PV Temporaires">
+                <button type="submit" class="btn-primary">Ajouter Temp</button>
+            </form>
+
+            <!-- CONDITIONS -->
+            <div class="conditions">
+                {% set active_conditions = c.conditions.split(",") if c.conditions else [] %}
+                {% for condition in conditions_list %}
+                    <a href="{{ url_for('toggle_condition', id=c.id, condition=condition) }}"
+                       class="condition-badge
+                       {% if condition in active_conditions %}active-condition{% endif %}"
+                       title="{{ conditions_descriptions[condition] }}">
+                        {{ condition }}
+                    </a>
+                {% endfor %}
+            </div>
+
+            <!-- ACTIONS COMBAT -->
+            <div class="combat-actions">
+                <form method="POST"
+                      action="{{ url_for('damage', id=c.id) }}"
+                      class="damage-form">
+                    <input type="number" name="amount" placeholder="Dégâts">
+                    <button type="submit" class="btn-danger">Infliger</button>
+                </form>
+
+                <form method="POST"
+                      action="{{ url_for('heal', id=c.id) }}"
+                      class="damage-form">
+                    <input type="number" name="amount" placeholder="Soin">
+                    <button type="submit" class="btn-primary">Soigner</button>
+                </form>
+            </div>
+
+            <!-- ÉTATS SPÉCIAUX -->
+            {% if c.is_dead %}
+                <div class="dead">💀 Mort</div>
+                <a href="{{ url_for('toggle_visibility', id=c.id) }}"
+                   class="btn-secondary">👁 Masquer</a>
+            {% endif %}
+
+            {% if c.has_fled %}
+                <div class="fled">🏃 En fuite</div>
+            {% endif %}
+
+            <!-- ACTIONS ADMINISTRATIVES -->
+            <div class="admin-actions">
+
+                <form method="GET"
+                      action="{{ url_for('toggle_fled', id=c.id) }}"
+                      style="display:inline;">
+                    {% if c.has_fled %}
+                        <button type="submit" class="btn-secondary">🔄 Revient</button>
+                    {% else %}
+                        <button type="submit" class="btn-warning">🏃 Fuite</button>
+                    {% endif %}
+                </form>
+
+                <form method="POST"
+                      action="{{ url_for('delete_combatant', id=c.id) }}"
+                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer {{ c.name }} ?');"
+                      style="display:inline;">
+                    <button type="submit" class="btn-danger">🗑 Supprimer</button>
+                </form>
+
+            </div>
+
+        </div>
+        {% endfor %}
+
+    </div>
+
+    <!-- ========================= -->
+    <!-- SIDEBAR INITIATIVE -->
+    <!-- ========================= -->
+    <div class="initiative-panel">
+        <h3>🎯 Initiative</h3>
+
+        <div class="initiative-list">
+            {% for p in initiative_order %}
+                <div class="initiative-card
+                    {% if loop.index0 == combat.current_turn %}active-init{% endif %}
+                    {% if p.is_dead %}dead-init{% endif %}
+                    {% if p.has_fled %}fled-init{% endif %}">
+
+                    <div>{{ p.name }}</div>
+                    <div>Init {{ p.initiative }}</div>
+
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+
+<!-- ========================= -->
+<!-- SCRIPTS -->
+<!-- ========================= -->
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+    /* AUTO SCROLL TOUR ACTIF */
+    const active = document.getElementById("current-turn");
+    if (active) {
+        active.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+    }
+
+    /* CHRONOS TEMPS RÉEL */
+    {% if combat.has_started and start_time and round_start and turn_start %}
+
+    function formatTime(seconds) {
+        let m = Math.floor(seconds / 60);
+        let s = seconds % 60;
+        return String(m).padStart(2, '0') + ":" + String(s).padStart(2, '0');
+    }
+
+    const combatStart = new Date("{{ start_time.isoformat() }}Z");
+    const roundStart  = new Date("{{ round_start.isoformat() }}Z");
+    const turnStart   = new Date("{{ turn_start.isoformat() }}Z");
+
+    setInterval(() => {
+        const now = new Date();
+
+        const combatSeconds = Math.floor((now - combatStart) / 1000);
+        const roundSeconds  = Math.floor((now - roundStart) / 1000);
+        const turnSeconds   = Math.floor((now - turnStart) / 1000);
+
+        document.getElementById("combat-timer").textContent = formatTime(combatSeconds);
+        document.getElementById("round-timer").textContent  = formatTime(roundSeconds);
+        document.getElementById("turn-timer").textContent   = formatTime(turnSeconds);
+
+    }, 1000);
+
+    {% endif %}
+
+});
+</script>
+
+{% endblock %}

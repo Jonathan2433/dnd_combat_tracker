@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="card">
+    <h2>Créer un nouveau combat</h2>
+    <form method="POST" action="{{ url_for('create_combat') }}">
+        <input type="text" name="name" placeholder="Nom du combat" required>
+        <button type="submit" class="btn-primary">Créer</button>
+    </form>
+</section>
+
+<section class="card">
+    <h2>Combats existants</h2>
+    {% for combat in combats %}
+        <div class="combat-row">
+            <div>
+            <strong>{{ combat.name }}</strong><br>
+            Round {{ combat.round }}
+
+            {% if combat.is_closed %}
+                <span class="combat-closed-badge">✅ Terminé</span>
+            {% endif %}
+        </div>
+
+            <div class="combat-actions">
+            <a href="{{ url_for('view_combat', combat_id=combat.id) }}"
+               class="btn">
+                Ouvrir
+            </a>
+
+            <a href="{{ url_for('combat_summary', combat_id=combat.id) }}"
+               class="btn-secondary">
+                📜 Résumé
+            </a>
+        </div>
+        </div>
+    {% else %}
+        <p>Aucun combat pour le moment.</p>
+    {% endfor %}
+</section>
+
+{% endblock %}

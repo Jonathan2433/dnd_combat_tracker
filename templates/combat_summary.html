@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>📜 Résumé du combat : {{ combat.name }}</h2>
+
+<!-- ========================= -->
+<!-- VUE D’ENSEMBLE -->
+<!-- ========================= -->
+<section class="card">
+    <h3>📊 Vue d'ensemble</h3>
+
+    <p><strong>Rounds :</strong> {{ total_rounds }}</p>
+    <p><strong>Durée totale du combat :</strong> {{ total_duration }}</p>
+    <p><strong>Morts :</strong> {{ total_deaths }}</p>
+    <p><strong>Dégâts totaux infligés :</strong> {{ total_damage }}</p>
+    <p><strong>Soins totaux donnés :</strong> {{ total_heal }}</p>
+</section>
+
+<hr>
+
+<!-- ========================= -->
+<!-- STATISTIQUES PAR COMBATTANT -->
+<!-- ========================= -->
+<section class="card">
+    <h3>⚔️ Statistiques par combattant</h3>
+
+    {% for stats in combatant_stats %}
+    <div class="summary-combatant">
+
+        <h4>
+            {{ stats.name }}
+            {% if stats.is_dead %}
+                <span class="dead">💀 Mort</span>
+            {% endif %}
+        </h4>
+
+        <ul>
+            <li>Dégâts infligés : {{ stats.damage_done }}</li>
+            <li>Dégâts reçus : {{ stats.damage_taken }}</li>
+            <li>Soins donnés : {{ stats.heal_done }}</li>
+            <li>Soins reçus : {{ stats.heal_taken }}</li>
+            <li>États appliqués : {{ stats.conditions_applied }}</li>
+            <li>États subis : {{ stats.conditions_received }}</li>
+            <li>Bonus CA appliqués : {{ stats.ac_bonus_given }}</li>
+            <li>Temps total de tour : {{ stats.time_spent }}</li>
+            <li><p><strong>En fuite :</strong> {{ total_fled }}</p></li>
+        </ul>
+
+    </div>
+    {% endfor %}
+</section>
+
+<hr>
+
+<!-- ========================= -->
+<!-- TIMELINE AVEC CHRONOS -->
+<!-- ========================= -->
+<section class="card">
+    <h3>🕒 Timeline du combat</h3>
+
+    {% if timeline %}
+
+        {% for round, turns in timeline.items() %}
+
+            <div class="round-block">
+                <h4>Round {{ round }} — {{ duration }}</h4>
+
+                <!-- Tours du round -->
+                {% for turn in turn_times.get(round, []) %}
+                    <div>▶ {{ turn.actor }} — {{ turn.duration }}</div>
+                {% endfor %}
+
+                <!-- Actions détaillées -->
+                {% for turn_owner, actions in turns.items() %}
+                    <div class="turn-block">
+                        <strong>Tour de {{ turn_owner }}</strong>
+                        <ul>
+                            {% for action in actions %}
+                                <li>{{ action }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endfor %}
+
+            </div>
+
+        {% endfor %}
+
+    {% else %}
+        <p>Aucune action enregistrée pour ce combat.</p>
+    {% endif %}
+
+</section>
+
+<hr>
+
+<a href="{{ url_for('index') }}" class="btn-primary">
+    ⬅ Retour à l'accueil
+</a>
+
+{% endblock %}

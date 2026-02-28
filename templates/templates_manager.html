@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>🛠️ Gestion des Templates</h2>
+
+<!-- ========================= -->
+<!-- CRÉER TEMPLATE PJ -->
+<!-- ========================= -->
+
+<section class="card">
+    <h3>➕ Créer un template PJ</h3>
+    
+    <form method="POST" action="{{ url_for('create_character_template') }}" class="grid-form">
+        <input type="text" name="name" placeholder="Nom du PJ" required>
+        <input type="text" name="character_class" placeholder="Classe" required>
+        <input type="number" name="level" placeholder="Niveau" required>
+        <input type="number" name="hp_max" placeholder="PV Max" required>
+        <input type="number" name="ac_base" placeholder="CA" required>
+        <input type="number" name="initiative_bonus" placeholder="Bonus Init" required>
+        
+        <button type="submit" class="btn-primary">Créer</button>
+    </form>
+</section>
+
+<!-- ========================= -->
+<!-- TEMPLATES PJ EXISTANTS -->
+<!-- ========================= -->
+
+<section class="card">
+    <h3>👥 Templates PJ existants</h3>
+    
+    {% for char in characters %}
+        <div class="template-row">
+            <div>
+                <strong>{{ char.name }}</strong><br>
+                {{ char.character_class }} niveau {{ char.level }}<br>
+                PV: {{ char.hp_max }} | CA: {{ char.ac_base }} | Init: {{ char.initiative_bonus }}
+            </div>
+            <div>
+                <form method="POST"
+                      action="{{ url_for('delete_character_template', id=char.id) }}"
+                      onsubmit="return confirm('Supprimer {{ char.name }} ?');"
+                      style="display:inline;">
+                    <button type="submit" class="btn-danger">Supprimer</button>
+                </form>
+            </div>
+        </div>
+    {% endfor %}
+</section>
+
+<!-- ========================= -->
+<!-- CRÉER ENCOUNTER -->
+<!-- ========================= -->
+
+<section class="card">
+    <h3>⚔️ Créer un encounter</h3>
+    
+    <form method="POST" action="{{ url_for('create_encounter_template') }}">
+        
+        <input type="text" name="name" placeholder="Nom encounter" required>
+        <textarea name="description" placeholder="Description"></textarea>
+        
+        <select name="difficulty">
+            <option>Easy</option>
+            <option>Medium</option>
+            <option>Hard</option>
+            <option>Deadly</option>
+        </select>
+        
+        <h4>Combattants de l'encounter</h4>
+        
+        <div id="encounter-combatants">
+            <div class="encounter-row">
+                <input type="text" name="combatant_name" placeholder="Nom">
+                <select name="combatant_type">
+                    <option>Ennemi</option>
+                    <option>Boss</option>
+                    <option>Neutre</option>
+                </select>
+                <input type="number" name="combatant_hp" placeholder="PV">
+                <input type="number" name="combatant_ac" placeholder="CA">
+                <input type="number" name="combatant_initiative" placeholder="Init">
+            </div>
+        </div>
+        
+        <button type="button" onclick="addEncounterRow()">+ Ajouter</button>
+        <button type="submit" class="btn-primary">Créer Encounter</button>
+        
+    </form>
+</section>
+
+<!-- ========================= -->
+<!-- ENCOUNTERS EXISTANTS -->
+<!-- ========================= -->
+
+<section class="card">
+    <h3>⚔️ Encounters existants</h3>
+    
+    {% for enc in encounters %}
+        <div class="template-row">
+            <div>
+                <strong>{{ enc.name }}</strong><br>
+                {{ enc.description }}<br>
+                Difficulté: {{ enc.difficulty }}
+            </div>
+            <div>
+                <form method="POST"
+                      action="{{ url_for('delete_encounter_template', id=enc.id) }}"
+                      onsubmit="return confirm('Supprimer {{ enc.name }} ?');"
+                      style="display:inline;">
+                    <button type="submit" class="btn-danger">Supprimer</button>
+                </form>
+            </div>
+        </div>
+    {% endfor %}
+</section>
+
+<!-- ========================= -->
+<!-- EXPORT / IMPORT -->
+<!-- ========================= -->
+
+<section class="card">
+    <h3>📁 Export / Import</h3>
+    
+    <a href="{{ url_for('export_templates') }}" class="btn-primary">
+        Exporter templates
+    </a>
+</section>
+
+<script>
+function addEncounterRow() {
+    const container = document.getElementById('encounter-combatants');
+    const newRow = document.createElement('div');
+    newRow.className = 'encounter-row';
+    newRow.innerHTML = `
+        <input type="text" name="combatant_name" placeholder="Nom">
+        <select name="combatant_type">
+            <option>Ennemi</option>
+            <option>Boss</option>
+            <option>Neutre</option>
+        </select>
+        <input type="number" name="combatant_hp" placeholder="PV">
+        <input type="number" name="combatant_ac" placeholder="CA">
+        <input type="number" name="combatant_initiative" placeholder="Init">
+    `;
+    container.appendChild(newRow);
+}
+</script>
+
+{% endblock %}
