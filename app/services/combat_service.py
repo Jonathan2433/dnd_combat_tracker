@@ -197,3 +197,17 @@ class CombatService:
                 group_condition_states[group_id][condition] = state
 
         return group_condition_states
+
+    @staticmethod
+    def delete_combat(combat_id):
+        """Supprimer un combat et toutes ses données liées"""
+        combat = Combat.query.get_or_404(combat_id)
+
+        # Les relations cascade="all, delete" s'occupent automatiquement de :
+        # - Supprimer tous les combattants
+        # - Supprimer tous les logs (via les foreign keys)
+
+        db.session.delete(combat)
+        db.session.commit()
+
+        return True

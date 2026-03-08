@@ -191,6 +191,15 @@ def combat_state(combat_id):
     })
 
 
+@bp.route('/<int:combat_id>/delete', methods=['POST'])
+def delete_combat(combat_id):
+    """Supprimer un combat"""
+    from app.services import CombatService
+
+    CombatService.delete_combat(combat_id)
+    return redirect(url_for('main.index'))
+
+
 def broadcast_combat_update(combat_id):
     """Diffuser une mise à jour via SocketIO"""
     socketio.emit(
@@ -198,3 +207,4 @@ def broadcast_combat_update(combat_id):
         {"combat_id": combat_id},
         room=f"combat_{combat_id}"
     )
+

@@ -89,14 +89,14 @@
                 </div>
 
                 <div class="combat-card-actions">
-                    <a href="{{ url_for('combat.view_combat', combat_id=combat.id) }}" class="btn btn-primary">
-                        Ouvrir
-                    </a>
+                    <a href="{{ url_for('combat.view_combat', combat_id=combat.id) }}" class="btn btn-primary">Ouvrir</a>
                     {% if combat.is_closed %}
-                    <a href="{{ url_for('summary.combat_summary', combat_id=combat.id) }}" class="btn btn-secondary">
-                        Résumé
-                    </a>
+                        <a href="{{ url_for('summary.combat_summary', combat_id=combat.id) }}" class="btn btn-secondary">Résumé</a>
                     {% endif %}
+                    <!-- ✅ NOUVEAU : Bouton de suppression -->
+                    <form method="post" action="{{ url_for('combat.delete_combat', combat_id=combat.id) }}" style="display:inline;">
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce combat ? Toutes les données seront perdues.')">🗑 Supprimer</button>
+                    </form>
                 </div>
             </div>
             {% endfor %}

@@ -108,3 +108,17 @@
 .template-avatar-container.has-image .pj-avatar-large {
     display: none;
 }
+
+.combat-card-actions form {
+    display: inline;
+}
+
+.combat-card-actions .btn-danger {
+    background: #e53935;
+    font-size: 12px;
+    padding: 4px 8px;
+}
+
+.combat-card-actions .btn-danger:hover {
+    background: #d32f2f;
+}
