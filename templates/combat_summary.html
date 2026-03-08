@@ -1,101 +1,201 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>📜 Résumé du combat : {{ combat.name }}</h2>
-
-<!-- ========================= -->
-<!-- VUE D’ENSEMBLE -->
-<!-- ========================= -->
-<section class="card">
-    <h3>📊 Vue d'ensemble</h3>
-
-    <p><strong>Rounds :</strong> {{ total_rounds }}</p>
-    <p><strong>Durée totale du combat :</strong> {{ total_duration }}</p>
-    <p><strong>Morts :</strong> {{ total_deaths }}</p>
-    <p><strong>Dégâts totaux infligés :</strong> {{ total_damage }}</p>
-    <p><strong>Soins totaux donnés :</strong> {{ total_heal }}</p>
-</section>
-
-<hr>
-
-<!-- ========================= -->
-<!-- STATISTIQUES PAR COMBATTANT -->
-<!-- ========================= -->
-<section class="card">
-    <h3>⚔️ Statistiques par combattant</h3>
-
-    {% for stats in combatant_stats %}
-    <div class="summary-combatant">
-
-        <h4>
-            {{ stats.name }}
-            {% if stats.is_dead %}
-                <span class="dead">💀 Mort</span>
-            {% endif %}
-        </h4>
-
-        <ul>
-            <li>Dégâts infligés : {{ stats.damage_done }}</li>
-            <li>Dégâts reçus : {{ stats.damage_taken }}</li>
-            <li>Soins donnés : {{ stats.heal_done }}</li>
-            <li>Soins reçus : {{ stats.heal_taken }}</li>
-            <li>États appliqués : {{ stats.conditions_applied }}</li>
-            <li>États subis : {{ stats.conditions_received }}</li>
-            <li>Bonus CA appliqués : {{ stats.ac_bonus_given }}</li>
-            <li>Temps total de tour : {{ stats.time_spent }}</li>
-            <li><p><strong>En fuite :</strong> {{ total_fled }}</p></li>
-        </ul>
-
+<div class="summary-container">
+    <div class="summary-header">
+        <h1>📜 Résumé du combat : {{ combat.name }}</h1>
+        <a href="{{ url_for('main.index') }}" class="btn btn-secondary">⬅ Retour à l'accueil</a>
     </div>
-    {% endfor %}
-</section>
 
-<hr>
-
-<!-- ========================= -->
-<!-- TIMELINE AVEC CHRONOS -->
-<!-- ========================= -->
-<section class="card">
-    <h3>🕒 Timeline du combat</h3>
-
-    {% if timeline %}
-
-        {% for round, turns in timeline.items() %}
-
-            <div class="round-block">
-                <h4>Round {{ round }} — {{ duration }}</h4>
-
-                <!-- Tours du round -->
-                {% for turn in turn_times.get(round, []) %}
-                    <div>▶ {{ turn.actor }} — {{ turn.duration }}</div>
-                {% endfor %}
-
-                <!-- Actions détaillées -->
-                {% for turn_owner, actions in turns.items() %}
-                    <div class="turn-block">
-                        <strong>Tour de {{ turn_owner }}</strong>
-                        <ul>
-                            {% for action in actions %}
-                                <li>{{ action }}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                {% endfor %}
-
+    <!-- ✅ Vue d'ensemble améliorée -->
+    <div class="summary-overview">
+        <h2>📊 Vue d'ensemble</h2>
+        <div class="overview-stats">
+            <div class="overview-stat">
+                <span class="stat-icon">🔁</span>
+                <div class="stat-content">
+                    <span class="stat-value">{{ total_rounds }}</span>
+                    <span class="stat-label">Rounds</span>
+                </div>
             </div>
 
-        {% endfor %}
+            <div class="overview-stat">
+                <span class="stat-icon">⏱</span>
+                <div class="stat-content">
+                    <span class="stat-value">{{ total_duration }}</span>
+                    <span class="stat-label">Durée totale</span>
+                </div>
+            </div>
 
-    {% else %}
-        <p>Aucune action enregistrée pour ce combat.</p>
-    {% endif %}
+            <div class="overview-stat">
+                <span class="stat-icon">💀</span>
+                <div class="stat-content">
+                    <span class="stat-value">{{ total_deaths }}</span>
+                    <span class="stat-label">Morts</span>
+                </div>
+            </div>
 
-</section>
+            <div class="overview-stat">
+                <span class="stat-icon">🏃</span>
+                <div class="stat-content">
+                    <span class="stat-value">{{ total_fled }}</span>
+                    <span class="stat-label">En fuite</span>
+                </div>
+            </div>
 
-<hr>
+            <div class="overview-stat">
+                <span class="stat-icon">💥</span>
+                <div class="stat-content">
+                    <span class="stat-value">{{ total_damage }}</span>
+                    <span class="stat-label">Dégâts totaux</span>
+                </div>
+            </div>
 
-<a href="{{ url_for('index') }}" class="btn-primary">
-    ⬅ Retour à l'accueil
-</a>
+            <div class="overview-stat">
+                <span class="stat-icon">✨</span>
+                <div class="stat-content">
+                    <span class="stat-value">{{ total_heal }}</span>
+                    <span class="stat-label">Soins totaux</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✅ Statistiques par combattant - CORRIGÉ -->
+    <div class="combatants-stats-section">
+        <h2>⚔️ Statistiques par combattant</h2>
+        <div class="combatants-stats-grid">
+            {% for stats in combatant_stats %}
+            <div class="combatant-stat-card {% if stats.is_dead %}dead-combatant{% elif stats.has_fled %}fled-combatant{% endif %}">
+                <div class="stat-card-header">
+                    <h3>{{ stats.name }}</h3>
+                    <div class="status-badges">
+                        {% if stats.is_dead %}
+                            <span class="status-badge dead">💀 Mort</span>
+                        {% endif %}
+                        {% if stats.has_fled %}
+                            <span class="status-badge fled">🏃 En fuite</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="stat-card-body">
+                    <div class="stat-grid">
+                        <div class="stat-item damage">
+                            <span class="stat-icon">⚔️</span>
+                            <div class="stat-info">
+                                <span class="stat-number">{{ stats.damage_done }}</span>
+                                <span class="stat-desc">Dégâts infligés</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-item damage-taken">
+                            <span class="stat-icon">🛡️</span>
+                            <div class="stat-info">
+                                <span class="stat-number">{{ stats.damage_taken }}</span>
+                                <span class="stat-desc">Dégâts reçus</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-item heal">
+                            <span class="stat-icon">✨</span>
+                            <div class="stat-info">
+                                <span class="stat-number">{{ stats.heal_done }}</span>
+                                <span class="stat-desc">Soins donnés</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-item heal-taken">
+                            <span class="stat-icon">❤️</span>
+                            <div class="stat-info">
+                                <span class="stat-number">{{ stats.heal_taken }}</span>
+                                <span class="stat-desc">Soins reçus</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-item conditions">
+                            <span class="stat-icon">🎭</span>
+                            <div class="stat-info">
+                                <span class="stat-number">{{ stats.conditions_applied }}</span>
+                                <span class="stat-desc">États appliqués</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-item conditions-received">
+                            <span class="stat-icon">😵</span>
+                            <div class="stat-info">
+                                <span class="stat-number">{{ stats.conditions_received }}</span>
+                                <span class="stat-desc">États subis</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-item ac-bonus">
+                            <span class="stat-icon">🛡️</span>
+                            <div class="stat-info">
+                                <span class="stat-number">{{ stats.ac_bonus_given }}</span>
+                                <span class="stat-desc">Bonus CA appliqués</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-item time">
+                            <span class="stat-icon">⏰</span>
+                            <div class="stat-info">
+                                <span class="stat-number">{{ stats.time_spent }}</span>
+                                <span class="stat-desc">Temps de tour</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ✅ Timeline améliorée -->
+    <div class="timeline-section">
+        <h2>🕒 Timeline du combat</h2>
+        {% if timeline %}
+            <div class="timeline-container">
+                {% for round_num, turns in timeline.items() %}
+                <div class="timeline-round">
+                    <div class="round-header">
+                        <h3>Round {{ round_num }}</h3>
+                        {% if round_times.get(round_num) %}
+                            <span class="round-duration">{{ round_times[round_num] }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="round-turns">
+                        {% for turn_owner, actions in turns.items() %}
+                        <div class="turn-block">
+                            <div class="turn-header">
+                                <span class="turn-actor">{{ turn_owner }}</span>
+                                {% for turn_info in turn_times.get(round_num, []) %}
+                                    {% if turn_info.actor == turn_owner %}
+                                        <span class="turn-duration">{{ turn_info.duration }}</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+
+                            <div class="turn-actions">
+                                {% for action in actions %}
+                                <div class="action-item">
+                                    {{ action }}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-timeline">
+                <p>Aucune action enregistrée pour ce combat.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
 
 {% endblock %}

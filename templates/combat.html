@@ -25,18 +25,18 @@
             <!-- Boutons -->
             <div class="hud-buttons">
                 {% if not combat.has_started %}
-                    <a href="{{ url_for('start_combat', combat_id=combat.id) }}"
+                    <a href="{{ url_for('combat.start_combat', combat_id=combat.id) }}"
                        class="btn-primary btn-large">
                         ▶ Lancer le combat
                     </a>
                 {% else %}
-                    <a href="{{ url_for('next_turn', combat_id=combat.id) }}"
+                    <a href="{{ url_for('combat.next_turn', combat_id=combat.id) }}"
                        class="btn-primary btn-large">
                         ▶ Tour Suivant
                     </a>
                 {% endif %}
 
-                <a href="{{ url_for('view_combat_player', combat_id=combat.id) }}"
+                <a href="{{ url_for('combat.view_combat_player', combat_id=combat.id) }}"
                    class="btn-secondary"
                    target="_blank">
                    👥 Vue Joueurs
@@ -44,7 +44,7 @@
 
             <!-- ✅ BOUTON CLÔTURER -->
             {% if not combat.is_closed %}
-                <a href="{{ url_for('close_combat', combat_id=combat.id) }}"
+                <a href="{{ url_for('combat.close_combat', combat_id=combat.id) }}"
                    class="btn-danger">
                     🏁 Clôturer le combat
                 </a>
@@ -62,7 +62,7 @@
             <h3>➕ Ajouter un combattant</h3>
 
             <form method="POST"
-                  action="{{ url_for('add_combatant', combat_id=combat.id) }}"
+                  action="{{ url_for('combat.add_combatant', combat_id=combat.id) }}"
                   class="grid-form">
 
                 <input type="text" name="name" placeholder="Nom" required>
@@ -87,9 +87,12 @@
         <!-- TEMPLATES PJ -->
         <!-- ========================= -->
         <section class="card">
-            <h3>👥 Ajouter des PJ (templates)</h3>
+            <h3>👥 Ajouter des PJ</h3>
 
-            <form method="POST" action="{{ url_for('add_character_template', combat_id=combat.id) }}" class="template-form">
+            <form method="POST"
+                  action="{{ url_for('combat.add_character_template', combat_id=combat.id) }}"
+                  class="template-form">
+
                 <select name="template_id">
                     {% for char in character_templates %}
                         <option value="{{ char.id }}">
@@ -98,7 +101,15 @@
                     {% endfor %}
                 </select>
 
-                <button type="submit" class="btn-primary">Ajouter PJ</button>
+                <input type="number"
+                       name="initiative"
+                       placeholder="Initiative"
+                       required>
+
+                <button type="submit" class="btn-primary">
+                    Ajouter PJ
+                </button>
+
             </form>
         </section>
 
@@ -106,9 +117,9 @@
         <!-- ENCOUNTERS COMPLETS -->
         <!-- ========================= -->
         <section class="card">
-            <h3>⚔️ Charger un encounter</h3>
+            <h3>⚔️ Charger un ennemie</h3>
 
-            <form method="POST" action="{{ url_for('load_encounter', combat_id=combat.id) }}" class="template-form">
+            <form method="POST" action="{{ url_for('combat.load_encounter', combat_id=combat.id) }}" class="template-form">
                 <select name="encounter_id">
                     {% for enc in encounter_templates %}
                         <option value="{{ enc.id }}">{{ enc.name }} ({{ enc.difficulty }})</option>
@@ -123,10 +134,10 @@
         <!-- AJOUT MONSTRES LOST MINE -->
         <!-- ========================= -->
         <section class="card">
-            <h3>Ajouter un monstre (Lost Mine)</h3>
+            <h3>Ajouter un monstre</h3>
 
             <form method="POST"
-                  action="{{ url_for('add_template', combat_id=combat.id) }}"
+                  action="{{ url_for('combat.add_template', combat_id=combat.id) }}"
                   class="grid-form">
 
                 <select name="template">
@@ -149,7 +160,7 @@
             <h3>🛡 Regrouper des combattants</h3>
 
             <form method="POST"
-                  action="{{ url_for('create_group', combat_id=combat.id) }}">
+                  action="{{ url_for('combat.create_group', combat_id=combat.id) }}">
 
                 {% for c in singles %}
                     {% if not c.is_dead and not c.has_fled %}
@@ -190,13 +201,13 @@
             <!-- Actions groupe -->
             <div class="group-actions">
                 <form method="POST"
-                      action="{{ url_for('damage_group', group_id=group_id) }}">
+                      action="{{ url_for('group.damage_group', group_id=group_id) }}">
                     <input type="number" name="amount" placeholder="Dégâts">
                     <button class="btn-danger">Infliger</button>
                 </form>
 
                 <form method="POST"
-                      action="{{ url_for('heal_group', group_id=group_id) }}">
+                      action="{{ url_for('group.heal_group', group_id=group_id) }}">
                     <input type="number" name="amount" placeholder="Soin">
                     <button class="btn-primary">Soigner</button>
                 </form>
@@ -206,7 +217,7 @@
             <div class="conditions">
                 {% for condition in conditions_list %}
                     {% set state = group_condition_states[group_id][condition] %}
-                    <a href="{{ url_for('toggle_condition_group',
+                    <a href="{{ url_for('group.toggle_condition_group',
                                         group_id=group_id,
                                         condition=condition) }}"
                        class="condition-badge
@@ -218,7 +229,7 @@
                 {% endfor %}
             </div>
 
-            <a href="{{ url_for('ungroup', group_id=group_id) }}"
+            <a href="{{ url_for('group.ungroup', group_id=group_id) }}"
                class="btn-danger">
                 Dégrouper
             </a>
@@ -253,7 +264,7 @@
             </div>
 
             <form method="POST"
-                  action="{{ url_for('modify_ac', id=c.id) }}"
+                  action="{{ url_for('combatant.modify_ac', id=c.id) }}"
                   class="damage-form">
                 <input type="number" name="amount" placeholder="+/- CA">
                 <button type="submit" class="btn-secondary">Modifier CA</button>
@@ -278,7 +289,7 @@
             </div>
 
             <form method="POST"
-                  action="{{ url_for('modify_temp_hp', id=c.id) }}"
+                  action="{{ url_for('combatant.modify_temp_hp', id=c.id) }}"
                   class="damage-form">
                 <input type="number" name="amount" placeholder="PV Temporaires">
                 <button type="submit" class="btn-primary">Ajouter Temp</button>
@@ -288,7 +299,7 @@
             <div class="conditions">
                 {% set active_conditions = c.conditions.split(",") if c.conditions else [] %}
                 {% for condition in conditions_list %}
-                    <a href="{{ url_for('toggle_condition', id=c.id, condition=condition) }}"
+                    <a href="{{ url_for('combatant.toggle_condition', id=c.id, condition=condition) }}"
                        class="condition-badge
                        {% if condition in active_conditions %}active-condition{% endif %}"
                        title="{{ conditions_descriptions[condition] }}">
@@ -300,14 +311,14 @@
             <!-- ACTIONS COMBAT -->
             <div class="combat-actions">
                 <form method="POST"
-                      action="{{ url_for('damage', id=c.id) }}"
+                      action="{{ url_for('combatant.damage', id=c.id) }}"
                       class="damage-form">
                     <input type="number" name="amount" placeholder="Dégâts">
                     <button type="submit" class="btn-danger">Infliger</button>
                 </form>
 
                 <form method="POST"
-                      action="{{ url_for('heal', id=c.id) }}"
+                      action="{{ url_for('combatant.heal', id=c.id) }}"
                       class="damage-form">
                     <input type="number" name="amount" placeholder="Soin">
                     <button type="submit" class="btn-primary">Soigner</button>
@@ -317,7 +328,7 @@
             <!-- ÉTATS SPÉCIAUX -->
             {% if c.is_dead %}
                 <div class="dead">💀 Mort</div>
-                <a href="{{ url_for('toggle_visibility', id=c.id) }}"
+                <a href="{{ url_for('combatant.toggle_visibility', id=c.id) }}"
                    class="btn-secondary">👁 Masquer</a>
             {% endif %}
 
@@ -329,7 +340,7 @@
             <div class="admin-actions">
 
                 <form method="GET"
-                      action="{{ url_for('toggle_fled', id=c.id) }}"
+                      action="{{ url_for('combatant.toggle_fled', id=c.id) }}"
                       style="display:inline;">
                     {% if c.has_fled %}
                         <button type="submit" class="btn-secondary">🔄 Revient</button>
@@ -339,7 +350,7 @@
                 </form>
 
                 <form method="POST"
-                      action="{{ url_for('delete_combatant', id=c.id) }}"
+                      action="{{ url_for('combatant.delete_combatant', id=c.id) }}"
                       onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer {{ c.name }} ?');"
                       style="display:inline;">
                     <button type="submit" class="btn-danger">🗑 Supprimer</button>

@@ -1,150 +1,176 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>🛠️ Gestion des Templates</h2>
+<div class="templates-container">
+    <div class="templates-header">
+        <h2>🛠 Gestion des Templates</h2>
+        <button class="btn btn-primary" onclick="document.getElementById('create-form').style.display='block'">+ Nouveau PJ</button>
+    </div>
 
-<!-- ========================= -->
-<!-- CRÉER TEMPLATE PJ -->
-<!-- ========================= -->
+    <!-- ✅ FORMULAIRE ÉTENDU -->
+    <div id="create-form" style="display: none;" class="card">
+        <h3>Créer un Template PJ</h3>
+        <form action="{{ url_for('template.create_character_template') }}" method="POST" enctype="multipart/form-data">
 
-<section class="card">
-    <h3>➕ Créer un template PJ</h3>
-    
-    <form method="POST" action="{{ url_for('create_character_template') }}" class="grid-form">
-        <input type="text" name="name" placeholder="Nom du PJ" required>
-        <input type="text" name="character_class" placeholder="Classe" required>
-        <input type="number" name="level" placeholder="Niveau" required>
-        <input type="number" name="hp_max" placeholder="PV Max" required>
-        <input type="number" name="ac_base" placeholder="CA" required>
-        <input type="number" name="initiative_bonus" placeholder="Bonus Init" required>
-        
-        <button type="submit" class="btn-primary">Créer</button>
-    </form>
-</section>
+            <div class="edit-grid">
+                <!-- Colonne 1 : Identité -->
+                <div class="edit-section">
+                    <h4>🧙 Identité</h4>
 
-<!-- ========================= -->
-<!-- TEMPLATES PJ EXISTANTS -->
-<!-- ========================= -->
+                    <label>Nom :</label>
+                    <input type="text" name="name" required>
 
-<section class="card">
-    <h3>👥 Templates PJ existants</h3>
-    
-    {% for char in characters %}
-        <div class="template-row">
-            <div>
-                <strong>{{ char.name }}</strong><br>
-                {{ char.character_class }} niveau {{ char.level }}<br>
-                PV: {{ char.hp_max }} | CA: {{ char.ac_base }} | Init: {{ char.initiative_bonus }}
+                    <label>Classe :</label>
+                    <input type="text" name="character_class" required>
+
+                    <label>Niveau :</label>
+                    <input type="number" name="level" value="1" min="1" max="20" required>
+
+                    <label>Notes :</label>
+                    <textarea name="notes" rows="3"></textarea>
+                </div>
+
+                <!-- Colonne 2 : Combat -->
+                <div class="edit-section">
+                    <h4>⚔️ Combat</h4>
+
+                    <label>❤️ PV Max :</label>
+                    <input type="number" name="hp_max" required>
+
+                    <label>🛡 CA :</label>
+                    <input type="number" name="ac_base" required>
+
+                    <label>⚡ Bonus Initiative :</label>
+                    <input type="number" name="initiative_bonus" value="0">
+                </div>
             </div>
-            <div>
-                <form method="POST"
-                      action="{{ url_for('delete_character_template', id=char.id) }}"
-                      onsubmit="return confirm('Supprimer {{ char.name }} ?');"
-                      style="display:inline;">
-                    <button type="submit" class="btn-danger">Supprimer</button>
-                </form>
+
+            <!-- ✅ NOUVEAU : Section Caractéristiques -->
+            <div class="edit-section">
+                <h4>📊 Caractéristiques</h4>
+                <div class="stats-grid">
+                    <div class="stat-input">
+                        <label>💪 Force :</label>
+                        <input type="number" name="force" value="10" min="1" max="30">
+                        <label>
+                            <input type="checkbox" name="maitrise_force"> Maîtrise sauvegarde
+                        </label>
+                    </div>
+
+                    <div class="stat-input">
+                        <label>🏃 Dextérité :</label>
+                        <input type="number" name="dexterite" value="10" min="1" max="30">
+                        <label>
+                            <input type="checkbox" name="maitrise_dexterite"> Maîtrise sauvegarde
+                        </label>
+                    </div>
+
+                    <div class="stat-input">
+                        <label>💚 Constitution :</label>
+                        <input type="number" name="constitution" value="10" min="1" max="30">
+                        <label>
+                            <input type="checkbox" name="maitrise_constitution"> Maîtrise sauvegarde
+                        </label>
+                    </div>
+
+                    <div class="stat-input">
+                        <label>🧠 Intelligence :</label>
+                        <input type="number" name="intelligence" value="10" min="1" max="30">
+                        <label>
+                            <input type="checkbox" name="maitrise_intelligence"> Maîtrise sauvegarde
+                        </label>
+                    </div>
+
+                    <div class="stat-input">
+                        <label>🦉 Sagesse :</label>
+                        <input type="number" name="sagesse" value="10" min="1" max="30">
+                        <label>
+                            <input type="checkbox" name="maitrise_sagesse"> Maîtrise sauvegarde
+                        </label>
+                    </div>
+
+                    <div class="stat-input">
+                        <label>✨ Charisme :</label>
+                        <input type="number" name="charisme" value="10" min="1" max="30">
+                        <label>
+                            <input type="checkbox" name="maitrise_charisme"> Maîtrise sauvegarde
+                        </label>
+                    </div>
+                </div>
             </div>
+
+            <!-- Médias -->
+            <div class="edit-section">
+                <h4>🖼 Médias</h4>
+                <div class="file-row">
+                    <div>
+                        <label>Image :</label>
+                        <input type="file" name="image" accept=".png,.jpg,.jpeg,.webp">
+                    </div>
+                    <div>
+                        <label>Fiche PDF :</label>
+                        <input type="file" name="pdf" accept=".pdf">
+                    </div>
+                </div>
+            </div>
+
+            <div class="edit-actions">
+                <button type="submit" class="btn btn-primary">Créer</button>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('create-form').style.display='none'">Annuler</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Liste des PJ existants -->
+    <div class="card">
+        <h3>🎭 Templates PJ</h3>
+        <div class="template-grid">
+            {% for char in characters %}
+            <div class="template-card">
+                <div class="template-card-header">
+                    <div class="template-avatar-container {% if char.image_filename %}has-image{% endif %}">
+                        {% if char.image_filename %}
+                            <img src="{{ url_for('static', filename='uploads/' + char.image_filename) }}"
+                                 alt="{{ char.name }}" class="template-avatar-img">
+                        {% endif %}
+                        <div class="avatar-placeholder">
+                            {{ char.name[:2]|upper }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="template-card-body">
+                    <h4>{{ char.name }}</h4>
+                    <p>{{ char.character_class }} • Niveau {{ char.level }}</p>
+                    <p>PV {{ char.hp_max }} | CA {{ char.ac_base }}</p>
+
+                    <!-- ✅ NOUVEAU : Affichage des caractéristiques -->
+                    <div class="char-stats-preview">
+                        <small>
+                            FOR {{ char.force }}({{ char.mod_force|abs if char.mod_force >= 0 else char.mod_force }}) |
+                            DEX {{ char.dexterite }}({{ char.mod_dexterite|abs if char.mod_dexterite >= 0 else char.mod_dexterite }}) |
+                            CON {{ char.constitution }}({{ char.mod_constitution|abs if char.mod_constitution >= 0 else char.mod_constitution }})
+                        </small>
+                        <br>
+                        <small>
+                            INT {{ char.intelligence }}({{ char.mod_intelligence|abs if char.mod_intelligence >= 0 else char.mod_intelligence }}) |
+                            SAG {{ char.sagesse }}({{ char.mod_sagesse|abs if char.mod_sagesse >= 0 else char.mod_sagesse }}) |
+                            CHA {{ char.charisme }}({{ char.mod_charisme|abs if char.mod_charisme >= 0 else char.mod_charisme }})
+                        </small>
+                    </div>
+                </div>
+
+                <div class="template-card-actions">
+                    <a href="{{ url_for('template.character_profile', id=char.id) }}" class="btn btn-secondary">Voir</a>
+                    <a href="{{ url_for('template.edit_character_template', id=char.id) }}" class="btn btn-primary">Modifier</a>
+                    <form action="{{ url_for('template.delete_character_template', id=char.id) }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Supprimer ce template ?')">🗑 Supprimer</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
         </div>
-    {% endfor %}
-</section>
-
-<!-- ========================= -->
-<!-- CRÉER ENCOUNTER -->
-<!-- ========================= -->
-
-<section class="card">
-    <h3>⚔️ Créer un encounter</h3>
-    
-    <form method="POST" action="{{ url_for('create_encounter_template') }}">
-        
-        <input type="text" name="name" placeholder="Nom encounter" required>
-        <textarea name="description" placeholder="Description"></textarea>
-        
-        <select name="difficulty">
-            <option>Easy</option>
-            <option>Medium</option>
-            <option>Hard</option>
-            <option>Deadly</option>
-        </select>
-        
-        <h4>Combattants de l'encounter</h4>
-        
-        <div id="encounter-combatants">
-            <div class="encounter-row">
-                <input type="text" name="combatant_name" placeholder="Nom">
-                <select name="combatant_type">
-                    <option>Ennemi</option>
-                    <option>Boss</option>
-                    <option>Neutre</option>
-                </select>
-                <input type="number" name="combatant_hp" placeholder="PV">
-                <input type="number" name="combatant_ac" placeholder="CA">
-                <input type="number" name="combatant_initiative" placeholder="Init">
-            </div>
-        </div>
-        
-        <button type="button" onclick="addEncounterRow()">+ Ajouter</button>
-        <button type="submit" class="btn-primary">Créer Encounter</button>
-        
-    </form>
-</section>
-
-<!-- ========================= -->
-<!-- ENCOUNTERS EXISTANTS -->
-<!-- ========================= -->
-
-<section class="card">
-    <h3>⚔️ Encounters existants</h3>
-    
-    {% for enc in encounters %}
-        <div class="template-row">
-            <div>
-                <strong>{{ enc.name }}</strong><br>
-                {{ enc.description }}<br>
-                Difficulté: {{ enc.difficulty }}
-            </div>
-            <div>
-                <form method="POST"
-                      action="{{ url_for('delete_encounter_template', id=enc.id) }}"
-                      onsubmit="return confirm('Supprimer {{ enc.name }} ?');"
-                      style="display:inline;">
-                    <button type="submit" class="btn-danger">Supprimer</button>
-                </form>
-            </div>
-        </div>
-    {% endfor %}
-</section>
-
-<!-- ========================= -->
-<!-- EXPORT / IMPORT -->
-<!-- ========================= -->
-
-<section class="card">
-    <h3>📁 Export / Import</h3>
-    
-    <a href="{{ url_for('export_templates') }}" class="btn-primary">
-        Exporter templates
-    </a>
-</section>
-
-<script>
-function addEncounterRow() {
-    const container = document.getElementById('encounter-combatants');
-    const newRow = document.createElement('div');
-    newRow.className = 'encounter-row';
-    newRow.innerHTML = `
-        <input type="text" name="combatant_name" placeholder="Nom">
-        <select name="combatant_type">
-            <option>Ennemi</option>
-            <option>Boss</option>
-            <option>Neutre</option>
-        </select>
-        <input type="number" name="combatant_hp" placeholder="PV">
-        <input type="number" name="combatant_ac" placeholder="CA">
-        <input type="number" name="combatant_initiative" placeholder="Init">
-    `;
-    container.appendChild(newRow);
-}
-</script>
+    </div>
+</div>
 
 {% endblock %}
